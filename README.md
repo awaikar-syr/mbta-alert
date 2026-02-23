@@ -1,0 +1,253 @@
+# 🚇 MBTA Red Line Timer
+
+A beautiful, real-time web dashboard that tells you exactly when to leave your house to catch the next Red Line train. Never miss your train or wait on the platform again!
+
+## ✨ Features
+
+- **🎯 Smart Departure Alerts**: Calculates your exact "leave by" time based on your walking distance
+- **⚡ Real-Time Predictions**: Live train data from MBTA's official API, updated every 30 seconds
+- **🎨 Beautiful UI**: Modern glass-morphism design with smooth animations (Framer Motion)
+- **🔔 Urgency Indicators**: Visual cues when you need to leave immediately
+- **⚙️ Customizable Settings**:
+  - Configure your walk time to the station
+  - Choose your travel direction (Northbound/Southbound)
+  - Personalized for JFK/UMass station
+- **📱 Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **🌙 Modern Design System**: Built with shadcn/ui components and Tailwind CSS
+
+## 🎥 What It Looks Like
+
+The dashboard displays:
+- **Hero Card**: Large, prominent display of when you need to leave (in giant numbers!)
+- **Countdown Timer**: Minutes until departure in real-time
+- **Upcoming Trains**: Up to 4 additional upcoming departures
+- **Live Status**: Shows train status ("Stopped 2 stops away", etc.)
+- **Visual Urgency**: Color-coded alerts (calm blue → urgent red)
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite 7** - Build tool and dev server
+- **TanStack Query (React Query)** - Data fetching and caching
+- **Wouter** - Lightweight routing
+- **Framer Motion** - Smooth animations
+- **shadcn/ui** - Modern UI components
+- **Tailwind CSS** - Utility-first styling
+- **date-fns** - Date/time formatting
+- **Lucide React** - Icons
+
+### Backend
+- **Node.js 22+** - Runtime
+- **Express 5** - Web server
+- **TypeScript** - Type safety
+- **Drizzle ORM** - Type-safe database queries
+- **PostgreSQL 16** - Database
+- **Zod** - Schema validation
+- **tsx** - TypeScript execution
+
+### Architecture
+- **Type-Safe API Contract**: Shared types between client/server via `shared/` directory
+- **Vite Middleware Mode**: Single server for both API and HMR in development
+- **Real-Time Polling**: Auto-refresh predictions every 30 seconds
+
+## 📋 Prerequisites
+
+- **Node.js**: v22.19.0 or higher (required by Vite 7)
+- **PostgreSQL**: v16 or higher
+- **npm**: v10 or higher
+
+### macOS Installation
+
+```bash
+# Install Node.js 22
+brew install node@22
+export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
+
+# Install PostgreSQL 16
+brew install postgresql@16
+brew services start postgresql@16
+```
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/awaikar-syr/mbta-alert.git
+cd mbta-alert
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Set Up Database
+
+```bash
+# Create database
+createdb mbta_alert
+
+# Apply schema
+npm run db:push
+```
+
+### 4. Configure Environment
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL=postgresql://your_username@localhost:5432/mbta_alert
+PORT=5001
+```
+
+> **Note**: Port 5000 conflicts with macOS Control Center, use 5001 instead.
+
+### 5. Start Development Server
+
+```bash
+npm run dev
+```
+
+The app will be available at **http://localhost:5001**
+
+## 📖 Usage
+
+1. **First Visit**: The app opens with default settings (JFK/UMass station, 6-minute walk, Southbound)
+2. **View Next Train**: The hero card shows your next train and when to leave
+3. **Customize Settings**: Click the ⚙️ icon in the top-right to:
+   - Adjust your walk time (1-60 minutes)
+   - Select direction (Northbound to Alewife / Southbound to Ashmont/Braintree)
+4. **Monitor**: The app automatically refreshes predictions every 30 seconds
+5. **Multiple Trains**: View up to 5 upcoming departures
+
+### Understanding the Display
+
+- **Leave by Time**: Large numbers showing when you should leave your house
+- **Countdown**: "in X min" shows time until you need to leave
+- **Train Arrival**: Shows when the train actually arrives at the station
+- **Status Indicators**:
+  - 🔵 **Blue** - You have plenty of time
+  - 🔴 **Red** - Leave immediately! (2 minutes or less)
+  - ⚫ **Gray** - Train already departed
+
+## 🏗️ Project Structure
+
+```
+mbta-alert/
+├── client/               # React frontend
+│   ├── src/
+│   │   ├── components/  # UI components (Hero, Cards, Settings)
+│   │   ├── hooks/       # React Query hooks (useMBTA, useSettings)
+│   │   ├── pages/       # Dashboard page
+│   │   └── lib/         # Utilities (queryClient, utils)
+│   └── index.html       # Entry HTML
+├── server/              # Express backend
+│   ├── index.ts         # Server entry point
+│   ├── routes.ts        # API endpoints
+│   ├── storage.ts       # Database abstraction
+│   ├── db.ts           # Database connection
+│   ├── vite.ts         # Vite middleware (dev mode)
+│   └── static.ts       # Static file serving (prod)
+├── shared/              # Shared types/contracts
+│   ├── schema.ts        # Database schema + Zod types
+│   └── routes.ts        # API contract definitions
+└── migrations/          # Database migrations (generated)
+```
+
+## 🔧 Development
+
+### Available Commands
+
+```bash
+npm run dev          # Start development server (port 5001)
+npm run build        # Build for production
+npm start            # Run production build
+npm run check        # TypeScript type checking
+npm run db:push      # Sync database schema
+```
+
+### Adding Database Changes
+
+1. Modify `shared/schema.ts`
+2. Run `npm run db:push` to apply changes
+3. For production, use `drizzle-kit generate` to create migrations
+
+### API Endpoints
+
+- `GET /api/settings` - Get user settings
+- `PATCH /api/settings` - Update settings (walkTime, direction)
+- `GET /api/mbta/predictions` - Get train predictions
+
+## 🌐 MBTA API Integration
+
+This app uses the **MBTA V3 API** (public, no API key required):
+
+- **Endpoint**: `https://api-v3.mbta.com/predictions`
+- **Filters**:
+  - `stop`: Station ID (default: `place-jfk`)
+  - `route`: Route ID (default: `Red`)
+  - `direction_id`: 0 (South) or 1 (North)
+- **Update Frequency**: Predictions are fetched every 30 seconds
+- **Rate Limits**: No documented limits for public API
+
+### How It Works
+
+1. App fetches predictions filtered by user's settings
+2. For each prediction, calculates: `departByTime = trainArrival - walkTimeMinutes`
+3. Calculates: `minutesUntilDeparture = departByTime - currentTime`
+4. Filters out already-departed trains (< -1 minute)
+5. Sorts by departure time and shows next 5 trains
+
+## 🚀 Production Build
+
+```bash
+# Build client and server
+npm run build
+
+# Output:
+# - dist/public/   (static client files)
+# - dist/index.cjs (bundled server)
+
+# Run production server
+npm start
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Maintain type safety (use TypeScript strictly)
+- Follow the shared API contract pattern
+- Add Zod schemas for new endpoints
+- Keep components focused and reusable
+- Test on both desktop and mobile viewports
+
+## 📄 License
+
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## 🙏 Acknowledgments
+
+- **MBTA** for providing free, public real-time transit data
+- **shadcn/ui** for beautiful, accessible components
+- Built with ❤️ for daily commuters on the Red Line
+
+## 📞 Support
+
+For bugs or feature requests, please [open an issue](https://github.com/awaikar-syr/mbta-alert/issues).
+
+---
+
+**Made for commuters, by commuters.** 🚇
