@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Clock, ArrowRight, TrainFront } from "lucide-react";
@@ -8,7 +9,7 @@ interface NextTrainHeroProps {
   walkTime: number;
 }
 
-export function NextTrainHero({ prediction, walkTime }: NextTrainHeroProps) {
+export const NextTrainHero = memo(function NextTrainHero({ prediction, walkTime }: NextTrainHeroProps) {
   const { minutesUntilDeparture, departByTime, arrivalTime, departureTime } = prediction;
   
   // If we don't have a departByTime, fallback to standard display
@@ -94,4 +95,4 @@ export function NextTrainHero({ prediction, walkTime }: NextTrainHeroProps) {
       <div className={`absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-[100px] opacity-20 pointer-events-none ${urgencyBg}`} />
     </motion.div>
   );
-}
+});

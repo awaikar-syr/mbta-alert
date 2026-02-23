@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Train, ArrowRight } from "lucide-react";
@@ -8,7 +9,7 @@ interface UpcomingTrainCardProps {
   index: number;
 }
 
-export function UpcomingTrainCard({ prediction, index }: UpcomingTrainCardProps) {
+export const UpcomingTrainCard = memo(function UpcomingTrainCard({ prediction, index }: UpcomingTrainCardProps) {
   const { minutesUntilDeparture, departByTime, arrivalTime, departureTime } = prediction;
   
   if (!departByTime || minutesUntilDeparture === null) return null;
@@ -56,4 +57,4 @@ export function UpcomingTrainCard({ prediction, index }: UpcomingTrainCardProps)
       </div>
     </motion.div>
   );
-}
+});

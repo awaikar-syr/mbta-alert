@@ -3,7 +3,8 @@ import { useSettings } from "@/hooks/use-settings";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { NextTrainHero } from "@/components/NextTrainHero";
 import { UpcomingTrainCard } from "@/components/UpcomingTrainCard";
-import { Train, AlertCircle, Loader2 } from "lucide-react";
+import { PredictionsSkeleton } from "@/components/PredictionsSkeleton";
+import { Train, AlertCircle } from "lucide-react";
 
 export default function Dashboard() {
   const { data: mbtaData, isLoading: isLoadingMBTA, isError: isErrorMBTA, error } = useMBTAPredictions();
@@ -14,7 +15,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50" role="banner">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
@@ -33,12 +34,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 space-y-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-12 space-y-12" role="main" aria-label="Train predictions dashboard">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            <p className="text-muted-foreground font-medium">Connecting to MBTA...</p>
-          </div>
+          <PredictionsSkeleton />
         ) : isErrorMBTA ? (
           <div className="glass-card rounded-3xl p-8 border-destructive/20 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mb-4">

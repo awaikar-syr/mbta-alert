@@ -8,7 +8,10 @@ export const settings = pgTable("settings", {
   walkTimeMinutes: integer("walk_time_minutes").notNull().default(6),
   stationId: text("station_id").notNull().default("place-jfk"),
   routeId: text("route_id").notNull().default("Red"),
-  directionId: integer("direction_id").notNull().default(0), // 0 or 1
+  // Direction IDs (per MBTA API):
+  // 0 = South (Ashmont/Braintree) - Southbound
+  // 1 = North (Alewife) - Northbound
+  directionId: integer("direction_id").notNull().default(0),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).omit({ id: true });
