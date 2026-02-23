@@ -4,6 +4,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { NextTrainHero } from "@/components/NextTrainHero";
 import { UpcomingTrainCard } from "@/components/UpcomingTrainCard";
 import { PredictionsSkeleton } from "@/components/PredictionsSkeleton";
+import { RouteMap } from "@/components/RouteMap";
 import { Train, AlertCircle } from "lucide-react";
 
 export default function Dashboard() {
@@ -65,9 +66,21 @@ export default function Dashboard() {
               return (
                 <>
                   <section>
-                    <NextTrainHero 
-                      prediction={heroPrediction} 
-                      walkTime={settings?.walkTimeMinutes || 6} 
+                    <NextTrainHero
+                      prediction={heroPrediction}
+                      walkTime={settings?.walkTimeMinutes || 6}
+                    />
+                  </section>
+
+                  {/* Route Map */}
+                  <section>
+                    <RouteMap
+                      currentStation={settings?.stationId || "place-jfk"}
+                      direction={settings?.directionId || 0}
+                      nextTrainStops={heroPrediction.status?.includes("stop") ?
+                        parseInt(heroPrediction.status.match(/\d+/)?.[0] || "0") :
+                        undefined
+                      }
                     />
                   </section>
 
