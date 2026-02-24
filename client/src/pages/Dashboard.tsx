@@ -56,12 +56,22 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {/* Find the first train that hasn't been completely missed */}
+            {/* Find the first train that hasn't been completely missed and separate by branch */}
             {(() => {
               const predictions = mbtaData.predictions;
               const nextValidIndex = predictions.findIndex(p => (p.minutesUntilDeparture ?? -1) > -5);
               const heroPrediction = nextValidIndex >= 0 ? predictions[nextValidIndex] : predictions[0];
-              const upcomingPredictions = predictions.slice(nextValidIndex + 1, nextValidIndex + 5);
+              // Show next 3 upcoming trains only
+              const upcomingPredictions = predictions.slice(nextValidIndex + 1, nextValidIndex + 4);
+
+              // Separate predictions by branch (for southbound only)
+              const isGoingSouth = settings?.directionId === 0;
+              let ashmontPredictions = predictions.filter(p => p.branch === 'Ashmont');
+              let braintreePredictions = predictions.filter(p => p.branch === 'Braintree');
+
+              // Get next train for each branch
+              const nextAshmont = ashmontPredictions.find(p => (p.minutesUntilDeparture ?? -1) > -5) || ashmontPredictions[0];
+              const nextBraintree = braintreePredictions.find(p => (p.minutesUntilDeparture ?? -1) > -5) || braintreePredictions[0];
 
               return (
                 <>
@@ -72,17 +82,54 @@ export default function Dashboard() {
                     />
                   </section>
 
-                  {/* Route Map */}
-                  <section>
-                    <RouteMap
-                      currentStation={settings?.stationId || "place-jfk"}
-                      direction={settings?.directionId || 0}
-                      nextTrainStops={heroPrediction.status?.includes("stop") ?
-                        parseInt(heroPrediction.status.match(/\d+/)?.[0] || "0") :
-                        undefined
-                      }
-                    />
-                  </section>
+                  {/* Dual Route Maps - only show for southbound (where the split happens) */}
+                  {isGoingSouth ? (
+                    <section className="space-y-4">
+                      <h3 className="font-display text-xl font-bold text-foreground pl-2">
+                        Route Maps
+                      </h3>
+                      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+                        {/* Ashmont Branch Map */}
+                        {nextAshmont && (
+                          <RouteMap
+                            currentStation={settings?.stationId || "place-jfk"}
+                            direction={settings?.directionId || 0}
+                            trainStopSequence={nextAshmont.stopSequence}
+                            vehicleStatus={nextAshmont.vehicleStatus}
+                            minutesUntilDeparture={nextAshmont.minutesUntilDeparture}
+                            branch="Ashmont"
+                            isActive={heroPrediction.branch === 'Ashmont'}
+                          />
+                        )}
+
+                        {/* Braintree Branch Map */}
+                        {nextBraintree && (
+                          <RouteMap
+                            currentStation={settings?.stationId || "place-jfk"}
+                            direction={settings?.directionId || 0}
+                            trainStopSequence={nextBraintree.stopSequence}
+                            vehicleStatus={nextBraintree.vehicleStatus}
+                            minutesUntilDeparture={nextBraintree.minutesUntilDeparture}
+                            branch="Braintree"
+                            isActive={heroPrediction.branch === 'Braintree'}
+                          />
+                        )}
+                      </div>
+                    </section>
+                  ) : (
+                    /* Single Route Map for Northbound */
+                    <section>
+                      <RouteMap
+                        currentStation={settings?.stationId || "place-jfk"}
+                        direction={settings?.directionId || 0}
+                        trainStopSequence={heroPrediction.stopSequence}
+                        vehicleStatus={heroPrediction.vehicleStatus}
+                        minutesUntilDeparture={heroPrediction.minutesUntilDeparture}
+                        branch={heroPrediction.branch}
+                        isActive={true}
+                      />
+                    </section>
+                  )}
 
                   {upcomingPredictions.length > 0 && (
                     <section className="space-y-4">

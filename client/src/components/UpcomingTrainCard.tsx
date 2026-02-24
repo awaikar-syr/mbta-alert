@@ -2,7 +2,7 @@ import { memo } from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Train, ArrowRight } from "lucide-react";
-import type { Prediction } from "@shared/routes";
+import type { Prediction } from "@shared/schema";
 
 interface UpcomingTrainCardProps {
   prediction: Prediction;
@@ -10,8 +10,8 @@ interface UpcomingTrainCardProps {
 }
 
 export const UpcomingTrainCard = memo(function UpcomingTrainCard({ prediction, index }: UpcomingTrainCardProps) {
-  const { minutesUntilDeparture, departByTime, arrivalTime, departureTime } = prediction;
-  
+  const { minutesUntilDeparture, departByTime, arrivalTime, departureTime, branch } = prediction;
+
   if (!departByTime || minutesUntilDeparture === null) return null;
 
   const formattedDepartBy = format(new Date(departByTime), "h:mm a");
@@ -41,6 +41,11 @@ export const UpcomingTrainCard = memo(function UpcomingTrainCard({ prediction, i
             ) : (
               <span className="text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                 in {minutesUntilDeparture} min
+              </span>
+            )}
+            {branch && (
+              <span className="text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
+                {branch}
               </span>
             )}
           </div>

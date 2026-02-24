@@ -1,6 +1,8 @@
 # 🚇 MBTA Red Line Timer
 
-A beautiful, real-time web dashboard that tells you exactly when to leave your house to catch the next Red Line train. Never miss your train or wait on the platform again!
+A beautiful, lightweight real-time web dashboard that tells you exactly when to leave your house to catch the next Red Line train. Never miss your train or wait on the platform again!
+
+**No database required** - settings stored in your browser!
 
 ## ✨ Features
 
@@ -12,6 +14,7 @@ A beautiful, real-time web dashboard that tells you exactly when to leave your h
   - Configure your walk time to the station
   - Choose your travel direction (Northbound/Southbound)
   - Personalized for JFK/UMass station
+  - **Settings persist in browser localStorage** (no database needed!)
 - **📱 Responsive Design**: Works perfectly on desktop, tablet, and mobile
 - **🌙 Modern Design System**: Built with shadcn/ui components and Tailwind CSS
 
@@ -37,13 +40,12 @@ The dashboard displays:
 - **Tailwind CSS** - Utility-first styling
 - **date-fns** - Date/time formatting
 - **Lucide React** - Icons
+- **localStorage** - Settings persistence
 
 ### Backend
 - **Node.js 22+** - Runtime
 - **Express 5** - Web server
 - **TypeScript** - Type safety
-- **Drizzle ORM** - Type-safe database queries
-- **PostgreSQL 16** - Database
 - **Zod** - Schema validation
 - **tsx** - TypeScript execution
 
@@ -51,12 +53,14 @@ The dashboard displays:
 - **Type-Safe API Contract**: Shared types between client/server via `shared/` directory
 - **Vite Middleware Mode**: Single server for both API and HMR in development
 - **Real-Time Polling**: Auto-refresh predictions every 30 seconds
+- **localStorage Persistence**: No database needed, settings stored in browser
 
 ## 📋 Prerequisites
 
 - **Node.js**: v22.19.0 or higher (required by Vite 7)
-- **PostgreSQL**: v16 or higher
 - **npm**: v10 or higher
+
+That's it! No database installation required.
 
 ### macOS Installation
 
@@ -64,10 +68,6 @@ The dashboard displays:
 # Install Node.js 22
 brew install node@22
 export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
-
-# Install PostgreSQL 16
-brew install postgresql@16
-brew services start postgresql@16
 ```
 
 ## 🚀 Quick Start
@@ -85,34 +85,25 @@ cd mbta-alert
 npm install
 ```
 
-### 3. Set Up Database
-
-```bash
-# Create database
-createdb mbta_alert
-
-# Apply schema
-npm run db:push
-```
-
-### 4. Configure Environment
+### 3. Configure Environment (Optional)
 
 Create a `.env` file in the root directory:
 
 ```env
-DATABASE_URL=postgresql://your_username@localhost:5432/mbta_alert
 PORT=5001
 ```
 
-> **Note**: Port 5000 conflicts with macOS Control Center, use 5001 instead.
+> **Note**: Port 5000 conflicts with macOS Control Center, so we use 5001 instead.
 
-### 5. Start Development Server
+### 4. Start Development Server
 
 ```bash
 npm run dev
 ```
 
 The app will be available at **http://localhost:5001**
+
+That's it! No database setup needed. 🎉
 
 ## 📖 Usage
 
@@ -121,6 +112,7 @@ The app will be available at **http://localhost:5001**
 3. **Customize Settings**: Click the ⚙️ icon in the top-right to:
    - Adjust your walk time (1-60 minutes)
    - Select direction (Northbound to Alewife / Southbound to Ashmont/Braintree)
+   - Settings automatically save to browser localStorage
 4. **Monitor**: The app automatically refreshes predictions every 30 seconds
 5. **Multiple Trains**: View up to 5 upcoming departures
 
@@ -143,19 +135,17 @@ mbta-alert/
 │   │   ├── components/  # UI components (Hero, Cards, Settings)
 │   │   ├── hooks/       # React Query hooks (useMBTA, useSettings)
 │   │   ├── pages/       # Dashboard page
-│   │   └── lib/         # Utilities (queryClient, utils)
+│   │   └── lib/         # Utilities (settings-storage, queryClient)
 │   └── index.html       # Entry HTML
 ├── server/              # Express backend
 │   ├── index.ts         # Server entry point
 │   ├── routes.ts        # API endpoints
-│   ├── storage.ts       # Database abstraction
-│   ├── db.ts           # Database connection
-│   ├── vite.ts         # Vite middleware (dev mode)
-│   └── static.ts       # Static file serving (prod)
+│   ├── vite.ts          # Vite middleware (dev mode)
+│   └── static.ts        # Static file serving (prod)
 ├── shared/              # Shared types/contracts
-│   ├── schema.ts        # Database schema + Zod types
+│   ├── schema.ts        # TypeScript interfaces + Zod types
 │   └── routes.ts        # API contract definitions
-└── migrations/          # Database migrations (generated)
+└── script/              # Build scripts
 ```
 
 ## 🔧 Development
@@ -167,20 +157,22 @@ npm run dev          # Start development server (port 5001)
 npm run build        # Build for production
 npm start            # Run production build
 npm run check        # TypeScript type checking
-npm run db:push      # Sync database schema
 ```
 
-### Adding Database Changes
+### Settings Persistence
 
-1. Modify `shared/schema.ts`
-2. Run `npm run db:push` to apply changes
-3. For production, use `drizzle-kit generate` to create migrations
+User settings are stored in **browser localStorage** under the key `mbta-settings`:
+
+- **Default values**: JFK/UMass, Red Line, Southbound, 6-minute walk
+- **Validation**: Settings are validated with Zod schemas for type safety
+- **Fallback**: Invalid data falls back to defaults automatically
+- **Privacy**: Settings are browser-specific (not synced across devices)
+
+To reset settings, clear browser localStorage or delete the `mbta-settings` key.
 
 ### API Endpoints
 
-- `GET /api/settings` - Get user settings
-- `PATCH /api/settings` - Update settings (walkTime, direction)
-- `GET /api/mbta/predictions` - Get train predictions
+- `GET /api/mbta/predictions?stationId=X&routeId=Y&directionId=Z&walkTime=N` - Get train predictions with settings as query params
 
 ## 🌐 MBTA API Integration
 
@@ -196,11 +188,14 @@ This app uses the **MBTA V3 API** (public, no API key required):
 
 ### How It Works
 
-1. App fetches predictions filtered by user's settings
-2. For each prediction, calculates: `departByTime = trainArrival - walkTimeMinutes`
-3. Calculates: `minutesUntilDeparture = departByTime - currentTime`
-4. Filters out already-departed trains (< -1 minute)
-5. Sorts by departure time and shows next 5 trains
+1. Client reads settings from localStorage
+2. App fetches predictions from backend with settings as query params
+3. Backend queries MBTA API with user's settings
+4. For each prediction, calculates: `departByTime = trainArrival - walkTimeMinutes`
+5. Calculates: `minutesUntilDeparture = departByTime - currentTime`
+6. Filters out already-departed trains (< -1 minute)
+7. Sorts by departure time and shows next 5 trains
+8. Client displays results with real-time countdown
 
 ## 🚀 Production Build
 
@@ -230,9 +225,10 @@ Contributions are welcome! Here's how:
 
 - Maintain type safety (use TypeScript strictly)
 - Follow the shared API contract pattern
-- Add Zod schemas for new endpoints
+- Add Zod schemas for new endpoints/types
 - Keep components focused and reusable
 - Test on both desktop and mobile viewports
+- Settings should use localStorage, not backend storage
 
 ## 📄 License
 
@@ -251,3 +247,5 @@ For bugs or feature requests, please [open an issue](https://github.com/awaikar-
 ---
 
 **Made for commuters, by commuters.** 🚇
+
+_Lightweight, fast, and database-free!_ ✨
